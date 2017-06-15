@@ -38,6 +38,9 @@ swift.addRule('/catch1/([0-9]+)/([A-Za-z0-9]+)', function(req, res, digits, alph
 	res.end('From the URL we got ' + digits +' and ' + alphanum + '\n');
 });
 
+
+/* Simple test to see Swift.js handing post-data and query string data.
+ */
 swift.addRoute("/formsanddata", function(req, res){
 	res.setHeader('Content-Type', 'text/html');
 
@@ -58,6 +61,8 @@ swift.addRoute("/formsanddata", function(req, res){
 });
 
 
+/* Part 2 of that /formsanddata test.
+ */
 swift.addRoute("/formsanddata/process", function(req, res){
 	email = req.getQuery('email');
 	
