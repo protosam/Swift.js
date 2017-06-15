@@ -1,10 +1,12 @@
 const http = require('http');
 Swift = function(options){
-	options['host'] = options['host'] || '0.0.0.0';
-	options['port'] = options['port'] || 3000;
+	this.host = options['host'] || '0.0.0.0';
+	this.port = options['port'] || 3000;
+	
+	this.max_upload_size = options['max_upload_size'] || 0;
 
-
-
+	http.IncomingMessage.prototype.killed = false;
+	
 	http.IncomingMessage.prototype.route = function(){
 		return this.url.split('?')[0].replace(/(.)\/$/g, '$1')
 	}
@@ -22,7 +24,7 @@ Swift = function(options){
 					if(data_break[k].indexOf('=') == -1){ // dude is doing bad stuff... just kill his connection
 						res.statusCode = 500;
 						res.setHeader('Content-Type', 'text/plain');
-						req.end('Invalid multipart form data.');
+						res.end('Invalid multipart form data.');
 						return undefined;
 					}
 					this.data_object[data_break[k].substring(0, data_break[k].indexOf('='))] = decodeURIComponent( data_break[k].substring( data_break[k].indexOf('=')+1, data_break[k].length ).replace(/\+/g, ' ') );
@@ -36,7 +38,7 @@ Swift = function(options){
 					if(data_break[k].indexOf('=') == -1){ // dude is doing bad stuff... just kill his connection
 						res.statusCode = 500;
 						res.setHeader('Content-Type', 'text/plain');
-						req.end('Invalid multipart form data.');
+						res.end('Invalid multipart form data.');
 						return undefined;
 					}
 					this.data_object[data_break[k].substring(0, data_break[k].indexOf('='))] = decodeURIComponent( data_break[k].substring( data_break[k].indexOf('=')+1, data_break[k].length ).replace(/\+/g, ' ') );
@@ -51,7 +53,7 @@ Swift = function(options){
 				if(boundary == null){ // dude is doing bad stuff... just kill his connection
 					res.statusCode = 500;
 					res.setHeader('Content-Type', 'text/plain');
-					req.end('Invalid multipart form data.');
+					res.end('Invalid multipart form data.');
 					return undefined;
 				}
 			
@@ -75,7 +77,7 @@ Swift = function(options){
 					if(name_match == null || name_match.length < 2){ // dude is doing bad stuff... just kill his connection
 						res.statusCode = 500;
 						res.setHeader('Content-Type', 'text/plain');
-						req.end('Invalid multipart form data.');
+						res.end('Invalid multipart form data.');
 						return undefined;
 					}
 				
@@ -104,10 +106,24 @@ Swift = function(options){
 	
 		// BEGIN: capturing data
 		var chunks = [];
+		var chunks_count = 0;
+		
 		req.on('data', function(chunk){
-			chunks.push(chunk);
+			chunks_count += chunk.length;
+			if(max_upload_size > 0 && chunks_count > max_upload_size){
+				res.statusCode = 500;
+				res.setHeader('Content-Type', 'text/plain');
+				res.end('Too much data received by server. Limit is set to ' + max_upload_size + '.');
+		
+				req.killed = true;
+			}
+			if(req.killed == false){
+				chunks.push(chunk);
+			}
 		});
+		
 		req.on('end', function() {
+			if(req.killed){ return; } // the request was killed, stop doing stuff.
 			data = Buffer.concat(chunks);
 			req.data = data.toString();
 			req.rawdata = data;
@@ -135,7 +151,7 @@ Swift = function(options){
 	});
 	
 	
-	this.server.listen(3000, '0.0.0.0', () => {
+	this.server.listen(this.port, this.host, () => {
 		console.log('Server running...');
 	});
 	
