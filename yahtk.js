@@ -14,7 +14,7 @@ var mimeTypes = {
 	"css": "text/css"
 };
 
-Swift = function(options){
+YAHtk = function(options){
 	this.host = options['host'] || '0.0.0.0';
 	this.port = options['port'] || 3000;
 	
