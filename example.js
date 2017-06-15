@@ -3,8 +3,11 @@
  */
 require('./swift.js');
 
+// Lazy math variable...
+_2mb=(2 * 1024 * 1024); // 2mb broken down to kb then b.
+
 // Fire up the HTTP server.
-swift = Swift({ host: '0.0.0.0', port: 3000 });
+swift = Swift({ host: '0.0.0.0', port: 3000, max_upload_size: _2mb });
 
 
 
