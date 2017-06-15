@@ -9,12 +9,13 @@ _2mb=(2 * 1024 * 1024); // 2mb broken down to kb then b.
 // Fire up the HTTP server.
 swift = Swift({ host: '0.0.0.0', port: 3000, max_upload_size: _2mb });
 
-
+swift.addStatic('www');
 
 swift.addRoute("/", function(req, res){
 	res.setHeader('Content-Type', 'text/html');
 	res.end('Welcome to the Swift example homepage!<br>\n\n' +
 	'Below you see examples of the different Swift.js supported features.<br><br>\n\n' +
+	'<a href="/iamstatic.html">Static File Example</a>.<br><br>\n' +
 	'<a href="/r1">/r1</a> | <a href="/d2">/d2</a> - These two pages use the same code to return output.<br><br>\n' +
 	'Rule Use Examples: <a href="/catch1/123/abc">example 1</a> | <a href="/catch1/8675309/WHATEVER">example 2</a> | <a href="/catch1/0000/zzzz">example 3</a> - Rules can be implemented to get data from the URL.<br><br>\n' +
 	'<a href="/formsanddata">Forms and Data Processing</a> - Getting data from your user could not be much easier than this.<br>\n' +
