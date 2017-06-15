@@ -17,6 +17,7 @@ yahtk.addRoute("/", function(req, res){
 	'Below you see examples of the different yahtk.js supported features.<br><br>\n\n' +
 	'<a href="/iamstatic.html">Static File Example</a>.<br><br>\n' +
 	'<a href="/cookietest">Cookies Demo</a>.<br><br>\n' +
+	'<a href="/tpltest">Template Demo</a>.<br><br>\n' +
 	'<a href="/r1">/r1</a> | <a href="/d2">/d2</a> - These two pages use the same code to return output.<br><br>\n' +
 	'Rule Use Examples: <a href="/catch1/123/abc">example 1</a> | <a href="/catch1/8675309/WHATEVER">example 2</a> | <a href="/catch1/0000/zzzz">example 3</a> - Rules can be implemented to get data from the URL.<br><br>\n' +
 	'<a href="/formsanddata">Forms and Data Processing</a> - Getting data from your user could not be much easier than this.<br>\n' +
@@ -92,4 +93,20 @@ yahtk.addRoute("/cookietest", function(req, res){
 	}
 	
 	res.end('The value of testcookie is ' + testcookie + ' | Refresh this page to see if it updates.');
+});
+
+
+
+yahtk.addRoute('/tpltest', function(req, res){
+	var tpl = new yahtpl('tpl/test.tpl');
+
+	tpl.assign('name', 'Joe Bloke');
+	tpl.assign('action', 'a thing');
+	tpl.parse('main.list');
+
+	tpl.assign({ name: 'Jessy Dame', action: 'something else'} );
+	tpl.parse('main.list');
+
+	tpl.parse('main');
+	tpl.out(res);
 });
