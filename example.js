@@ -1,20 +1,20 @@
-/* Swift.js - The everything test!
-   This is a test for everything that Swift.js currently supports.
+/* yahtk.js - The everything test!
+   This is a test for everything that yahtk.js currently supports.
  */
-require('./swift.js');
+require('./yahtk.js');
 
 // Lazy math variable...
 _2mb=(2 * 1024 * 1024); // 2mb broken down to kb then b.
 
 // Fire up the HTTP server.
-swift = Swift({ host: '0.0.0.0', port: 3000, max_upload_size: _2mb });
+yahtk = YAHtk({ host: '0.0.0.0', port: 3000, max_upload_size: _2mb });
 
-swift.addStatic('www');
+yahtk.addStatic('www');
 
-swift.addRoute("/", function(req, res){
+yahtk.addRoute("/", function(req, res){
 	res.setHeader('Content-Type', 'text/html');
-	res.end('Welcome to the Swift example homepage!<br>\n\n' +
-	'Below you see examples of the different Swift.js supported features.<br><br>\n\n' +
+	res.end('Welcome to the YAHtk example homepage!<br>\n\n' +
+	'Below you see examples of the different yahtk.js supported features.<br><br>\n\n' +
 	'<a href="/iamstatic.html">Static File Example</a>.<br><br>\n' +
 	'<a href="/r1">/r1</a> | <a href="/d2">/d2</a> - These two pages use the same code to return output.<br><br>\n' +
 	'Rule Use Examples: <a href="/catch1/123/abc">example 1</a> | <a href="/catch1/8675309/WHATEVER">example 2</a> | <a href="/catch1/0000/zzzz">example 3</a> - Rules can be implemented to get data from the URL.<br><br>\n' +
@@ -25,7 +25,7 @@ swift.addRoute("/", function(req, res){
 
 /* We want /r1 and /d2 to land on the same code, so we just do the following.
  */
-swift.addRoute([ "/r1", "/d2" ], function(req, res){
+yahtk.addRoute([ "/r1", "/d2" ], function(req, res){
 	res.setHeader('Content-Type', 'text/html');
 	res.end('These are not the JS-<i>droids you are looking for</i>.');
 });
@@ -34,15 +34,15 @@ swift.addRoute([ "/r1", "/d2" ], function(req, res){
 /* Want to catch some input directly from the URL?
    We just use some regex like below. Capture groups are involved in filling in the function parameters.
  */
-swift.addRule('/catch1/([0-9]+)/([A-Za-z0-9]+)', function(req, res, digits, alphanum){
+yahtk.addRule('/catch1/([0-9]+)/([A-Za-z0-9]+)', function(req, res, digits, alphanum){
 	res.setHeader('Content-Type', 'text/plain');
 	res.end('From the URL we got ' + digits +' and ' + alphanum + '\n');
 });
 
 
-/* Simple test to see Swift.js handing post-data and query string data.
+/* Simple test to see yahtk.js handing post-data and query string data.
  */
-swift.addRoute("/formsanddata", function(req, res){
+yahtk.addRoute("/formsanddata", function(req, res){
 	res.setHeader('Content-Type', 'text/html');
 
 	res.end('Normal Form:<br>' +
@@ -64,7 +64,7 @@ swift.addRoute("/formsanddata", function(req, res){
 
 /* Part 2 of that /formsanddata test.
  */
-swift.addRoute("/formsanddata/process", function(req, res){
+yahtk.addRoute("/formsanddata/process", function(req, res){
 	email = req.getQuery('email');
 	
 	res.setHeader('Content-Type', 'text/html');
