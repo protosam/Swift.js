@@ -14,6 +14,92 @@ var mimeTypes = {
 	"css": "text/css"
 };
 
+yahtpl = class {
+
+	constructor(file){
+		this.tplblocks = {};
+		this.assignments = {};
+		this.tplfile = path.join(rundir, file);
+		this.filecontents = "";
+		if(fs.existsSync(this.tplfile)){
+			this.filecontents = fs.readFileSync(this.tplfile).toString().replace(/(\r\n|\n|\n\r)/g, '<!-- NL -->');
+			
+			this.breakblocks(this.filecontents, '');
+		}
+	}
+	
+	breakblocks(contents, layer){
+		var parent = layer;
+		if(layer != ''){ layer += '.'; }
+		
+		var blocks = contents.match(/<!-- BEGIN: (.*?) -->(.*?)<!-- END: \1 -->/g);
+		if(blocks != null && blocks.length > 0){
+			for(var x=0;x<blocks.length;x++){
+				var block = blocks[x];
+				var transform = block.match(/<!-- BEGIN: (.*?) -->(.*?)<!-- END: \1 -->/);
+				var name = transform[1];
+				var content = transform[2];
+				
+				if(parent == ''){
+					this.filecontents = this.filecontents.replace(transform[0], '<--_' + layer + name + '_-->' );
+				}else{
+					this.tplblocks[parent] = this.tplblocks[parent].replace(transform[0], '<--_' + layer + name + '_-->' );
+				}
+				
+				this.tplblocks[layer + name] = content;
+				this.breakblocks(content, layer + name);
+			}
+		}
+	}
+	
+	getParent(blockname){
+		if(blockname.lastIndexOf(".") == -1){ return ''; }
+		return blockname.substr(0, blockname.lastIndexOf("."))
+	}
+	
+	assign(varname, val){
+		if(typeof(varname) == typeof({})){
+			for(var k in varname){
+				this.assignments[k] = varname[k];
+			}
+		}else{
+			this.assignments[varname] = val;
+		}
+	}
+	
+	parse(blockname){
+		var parent = this.getParent(blockname);
+		
+		var assigned_block = this.tplblocks[blockname];
+		
+		for(var varname in this.assignments){
+			assigned_block = assigned_block.replace('{' + varname + '}', this.assignments[varname]);
+		}
+		
+		if(parent == ''){
+			this.filecontents = this.filecontents.replace('<--_' + blockname + '_-->', assigned_block + '<--_' + blockname + '_-->');
+		}else{
+			this.tplblocks[parent] = this.tplblocks[parent].replace('<--_' + blockname + '_-->', assigned_block + '<--_' + blockname + '_-->');
+		}
+		
+		this.assignments = {};
+	}
+	
+	out(res){
+		this.filecontents = this.filecontents.replace(/<--_(.*?)_-->/g, "");
+		this.filecontents = this.filecontents.replace(/<!-- NL -->/g, "\n");
+		
+		if(typeof(res) == 'undefined'){
+			
+			return this.filecontents.trim();
+		}
+		
+		res.statusCode = 200;
+		res.setHeader('Content-Type', 'text/html');
+		res.end(this.filecontents.trim());
+	}
+}
+
 YAHtk = function(options){
 	this.host = options['host'] || '0.0.0.0';
 	this.port = options['port'] || 3000;
@@ -24,6 +110,36 @@ YAHtk = function(options){
 	
 	http.IncomingMessage.prototype.route = function(){
 		return this.url.split('?')[0].replace(/(.)\/$/g, '$1')
+	}
+
+	// this needs more... https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+	http.ServerResponse.prototype.setCookie = function(name, value){
+		this.setHeader('Set-Cookie', name + '=' + value);
+	}
+	
+	http.ServerResponse.prototype.expireCookie = function(name){
+		this.setHeader('Set-Cookie', name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+	}
+	
+	http.IncomingMessage.prototype.getCookie = function(name){
+		if(!('cookie' in this.headers)) { return undefined; }
+		if(!('cookie_object' in this)){
+			this.cookie_object = {};
+			var rc = this.headers.cookie;
+
+			rc = rc.split(';')
+			for(x=0; x<rc.length; x++){
+				var parts = rc[x].split('=');
+				if(parts.length < 2){ continue;	}
+				this.cookie_object[parts[0].trim()] = decodeURI(parts[1]);
+			};
+		}
+
+		
+		if(!(name in this.cookie_object)){
+			return undefined;
+		}
+		return this.cookie_object[name];
 	}
 
 	http.IncomingMessage.prototype.getQuery = function(name){
