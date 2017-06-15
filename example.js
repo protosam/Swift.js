@@ -16,6 +16,7 @@ yahtk.addRoute("/", function(req, res){
 	res.end('Welcome to the YAHtk example homepage!<br>\n\n' +
 	'Below you see examples of the different yahtk.js supported features.<br><br>\n\n' +
 	'<a href="/iamstatic.html">Static File Example</a>.<br><br>\n' +
+	'<a href="/cookietest">Cookies Demo</a>.<br><br>\n' +
 	'<a href="/r1">/r1</a> | <a href="/d2">/d2</a> - These two pages use the same code to return output.<br><br>\n' +
 	'Rule Use Examples: <a href="/catch1/123/abc">example 1</a> | <a href="/catch1/8675309/WHATEVER">example 2</a> | <a href="/catch1/0000/zzzz">example 3</a> - Rules can be implemented to get data from the URL.<br><br>\n' +
 	'<a href="/formsanddata">Forms and Data Processing</a> - Getting data from your user could not be much easier than this.<br>\n' +
@@ -69,4 +70,26 @@ yahtk.addRoute("/formsanddata/process", function(req, res){
 	
 	res.setHeader('Content-Type', 'text/html');
 	res.end('You told us your email was ' + email);
+});
+
+
+/* Cookies demo...
+ */
+yahtk.addRoute("/cookietest", function(req, res){
+
+	res.setHeader('Content-Type', 'text/html');
+	
+	testcookie = req.getCookie('testcookie');
+	if(typeof(testcookie) == 'undefined'){
+		testcookie = "not set";
+		res.setCookie('testcookie', 'totally set now');
+		
+		res.write('Sent a set cookie header<br>\n');
+	}else{
+		res.expireCookie('testcookie');
+		
+		res.write('Sent an expiry for the cookie header<br>\n');
+	}
+	
+	res.end('The value of testcookie is ' + testcookie + ' | Refresh this page to see if it updates.');
 });
