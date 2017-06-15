@@ -5,6 +5,7 @@ var path = require('path');
 var rundir = path.dirname(require.main.filename);
 
 var mimeTypes = {
+	"txt": "text/plain",
 	"html": "text/html",
 	"jpeg": "image/jpeg",
 	"jpg": "image/jpeg",
@@ -167,9 +168,12 @@ Swift = function(options){
 			
 			// try the file system.
 			for(s=0; s<statics.length; s++){
-				var filename = path.join(rundir + '/' + statics[s], path.normalize(req.url).replace(/^(\.\.[\/\\])+/, ''));
+				var filename = path.join(rundir + '/' + statics[s], path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '')); // Stupid Syntax Highler.. ]/
 				if(fs.existsSync(filename)){
-					var mimeType = mimeTypes[path.extname(filename).split(".")[1]];
+					
+					var ext = path.extname(filename).split(".");
+					if(typeof(ext[1]) == 'undefined') { ext = 'txt'; }else{ ext = ext[1]; }
+					var mimeType = mimeTypes[ext];
 				
 					res.statusCode = 200;
 					res.setHeader('Content-Type', mimeType);
