@@ -1,4 +1,18 @@
 const http = require('http');
+var fs = require('fs');
+var path = require('path');
+
+var rundir = path.dirname(require.main.filename);
+
+var mimeTypes = {
+	"html": "text/html",
+	"jpeg": "image/jpeg",
+	"jpg": "image/jpeg",
+	"png": "image/png",
+	"js": "text/javascript",
+	"css": "text/css"
+};
+
 Swift = function(options){
 	this.host = options['host'] || '0.0.0.0';
 	this.port = options['port'] || 3000;
@@ -97,6 +111,7 @@ Swift = function(options){
 	
 	this.routes = {};
 	this.rules = [];
+	this.statics = [];
 	
 	this.server = http.createServer(function(req, res){
 		console.log(req.url);
@@ -123,11 +138,15 @@ Swift = function(options){
 		});
 		
 		req.on('end', function() {
+			
 			if(req.killed){ return; } // the request was killed, stop doing stuff.
+			
+			// buff that data up into a useful place!
 			data = Buffer.concat(chunks);
 			req.data = data.toString();
 			req.rawdata = data;
 	
+			// try rules...
 			for(r=0; r<rules.length; r++){
 				matches = req.url.match(rules[r]['regex']);
 				if(matches != null){
@@ -139,13 +158,33 @@ Swift = function(options){
 				}
 			}
 	
+			// try routes
 			if(req.route() in routes && req.route()[0] == '/'){
 				routes[req.route()](req, res);
-			}else{
-				res.statusCode = 404;
-				res.setHeader('Content-Type', 'text/plain');
-				res.end('404 - Page not found.\n');
+				return;
 			}
+			
+			
+			// try the file system.
+			for(s=0; s<statics.length; s++){
+				var filename = path.join(rundir + '/' + statics[s], path.normalize(req.url).replace(/^(\.\.[\/\\])+/, ''));
+				if(fs.existsSync(filename)){
+					var mimeType = mimeTypes[path.extname(filename).split(".")[1]];
+				
+					res.statusCode = 200;
+					res.setHeader('Content-Type', mimeType);
+
+					var fileStream = fs.createReadStream(filename);
+					fileStream.pipe(res);
+					//res.end();
+					return;
+				}
+			}
+			
+			// fallback to a 404..
+			res.statusCode = 404;
+			res.setHeader('Content-Type', 'text/plain');
+			res.end('404 - Page not found.\n');
 		});
 		// END: capturing data
 	});
@@ -155,6 +194,10 @@ Swift = function(options){
 		console.log('Server running...');
 	});
 	
+	this.addStatic = function(dir){
+		this.statics.push(dir);
+	}
+
 	this.addRule = function(rule, fn){
 		// addRule('/test/([0-9])+/([0-9]+)/whatever', fn);
 		this.rules.push({ regex: new RegExp('^'+rule+'$'), fn: fn, text_rule: rule });
